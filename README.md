@@ -4,9 +4,9 @@
 
 <p align="center">
   <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template-containerized/actions/workflows/feature-development-workflow.yml/badge.svg" />
-  <img title="Bandit badge" alt="Bandit badge" src="Development Build](https://github.com/twyle/repo-template-containerized/actions/workflows/development-workflow.yml/badge.svg" />
+  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template-containerized/actions/workflows/development-workflow.yml/badge.svg" />
   <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template-containerized/actions/workflows/staging-workflow.yml/badge.svg" />
-  <img title="Bandit badge" alt="Bandit badge" src="[![Create a Release.](https://github.com/twyle/repo-template-containerized/actions/workflows/release-workflow.yml/badge.svg)](https://github.com/twyle/repo-template-containerized/actions/workflows/release-workflow.yml)" />
+  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template-containerized/actions/workflows/release-workflow.yml/badge.svg" />
   <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template-containerized/actions/workflows/production-workflow.yml/badge.svg" />
   <img title="Bandit badge" alt="Bandit badge" src="https://img.shields.io/badge/security-bandit-yellow.svg" />
   <img title="Bandit badge" alt="Bandit badge" src="https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336" />
