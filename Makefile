@@ -38,7 +38,7 @@ seed-db:
 	@python services/web/manage.py seed_db
 
 test-local:
-	@curl localhost:5000/
+	@curl localhost
 	@curl localhost:5000/users
 
 run-dev:
