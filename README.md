@@ -3,11 +3,11 @@
 > This flask application enables enables an admin to register then authorizes them to create new users.
 
 <p align="center">
-  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template/actions/workflows/feature-development-workflow.yml/badge.svg" />
-  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template/actions/workflows/development-workflow.yml/badge.svg" />
-  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template/actions/workflows/staging-workflow.yml/badge.svg" />
-  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template/actions/workflows/release-workflow.yml/badge.svg" />
-  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template/actions/workflows/production-workflow.yml/badge.svg" />
+  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template-containerized/actions/workflows/feature-development-workflow.yml/badge.svg" />
+  <img title="Bandit badge" alt="Bandit badge" src="Development Build](https://github.com/twyle/repo-template-containerized/actions/workflows/development-workflow.yml/badge.svg" />
+  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template-containerized/actions/workflows/staging-workflow.yml/badge.svg" />
+  <img title="Bandit badge" alt="Bandit badge" src="[![Create a Release.](https://github.com/twyle/repo-template-containerized/actions/workflows/release-workflow.yml/badge.svg)](https://github.com/twyle/repo-template-containerized/actions/workflows/release-workflow.yml)" />
+  <img title="Bandit badge" alt="Bandit badge" src="https://github.com/twyle/repo-template-containerized/actions/workflows/production-workflow.yml/badge.svg" />
   <img title="Bandit badge" alt="Bandit badge" src="https://img.shields.io/badge/security-bandit-yellow.svg" />
   <img title="Bandit badge" alt="Bandit badge" src="https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336" />
   <img title="Bandit badge" alt="Bandit badge" src="https://img.shields.io/badge/Made%20with- Python-1f425f.svg" />
@@ -56,7 +56,7 @@ This application has several features including:
  3. Auto-deployed to AWS using GitHub Actions.
  4. Uses gunicorn as the application server and nginx as the proxy.
  5. Uses AWS SES to send emails.
- 6. Uses AWS Opensearch and Firehose for logging as filebeats.
+ 6. Uses AWS Opensearch and Firehose for logging as well as filebeats.
  7. Uses AWS Secrets manager to manage the application secrets and AWS KMS for key management.
  8. Uses PostgreSQL for data storage.
  9. Uses JSON Web Tokens to authorize users.
@@ -67,7 +67,7 @@ This application has several features including:
 ## Application Structure
 
 ```sh
-repo-template/
+repo-template-containerized/
 │
 └───.github/
 │     │
@@ -175,13 +175,13 @@ Here is how to set up the application locally:
   1. Clone the application repo:</br>
 
       ```sh
-      git clone https://github.com/twyle/repo-template.git
+      git clone https://github.com/twyle/repo-template-containerized.git
       ```
 
   2. Navigate into the cloned repo:
 
       ```sh
-      cd repo-template
+      cd repo-template-containerized
       ```
 
   3. Create a Virtual environment:
@@ -255,14 +255,15 @@ Here is how to set up the application locally:
 
       ```sh
       make start-db-containers
+      make create-db
+      make seed-db
       ```
 
   8. Start the application:
 
       ```sh
-      make run
+      make run-dev
       ```
-
 
 ## Development
 
@@ -399,57 +400,205 @@ The initial deployment describes the first dployment to the AWS EC2 instance. Th
     This involves the following steps:
 
       1. Provide an AWS EC2 instance, with latest Ubuntu version and ssh into then instance
-      2. Update and upgrade the packages
-      3. Install the python package manager (python3-pip)
-      4. Install the virtual environment manager (python3-venv)
-      5. Install the PostgreSQL database
-      6. Setup the database, to disable peer authentication, to allow access from anywhere. Also set up the postgres user, with a password and create the development database.
-      7. Install nginx, enable it and start it.
-      8. Create a new user, and give them admin access.
-      9. Create an elastic IP for the EC2 instance.
 
- 2. **Cloning the project**
+          ```sh
+          ssh -i "ec2.pem" ubuntu@ec2-xx-206-xx-100.compute-1.amazonaws.com
+          ```
+
+      2. Update and upgrade the packages
+
+          ```sh
+          sudo apt update && sudo apt upgrade -y
+          ```
+
+      3. Install the python package manager (python3-pip)
+
+          ```sh
+          sudo apt install python3-pip -y
+          ```
+
+      4. Install the virtual environment manager (python3-venv)
+
+          ```sh
+          sudo apt install python3-venv -y
+          ```
+
+      5. Install nginx, enable it and start it.
+
+          ```sh
+          sudo apt install nginx -y
+          ```
+
+      6. Create a new user, and give them admin access.
+
+          ```sh
+          adduser lyle
+          sudo usermod -aG sudo lyle
+          ```
+
+      7. Enable ssh into the created user account
+
+          ```sh
+           sudo su - lyle
+           mkdir .ssh
+           chmod 700 .ssh
+           touch .ssh/authorized_keys
+           chmod 600 .ssh/authorized_keys
+          ```
+
+          Retrieve the public key from the private key:
+
+          ```sh
+          ssh-keygen -y -f ec2.pem
+          ```
+
+          copy and paste into the .ssh/authorized_keys file
+
+      8. Create an elastic IP for the EC2 instance.
+
+ 2. **Setting up the PostgreSQL database**
+      To set up the database, follow these steps:
+
+      1. Install PostgreSQL
+
+          ```sh
+          sudo apt install postgresql postgresql-contrib -y
+          ```
+
+      2. Update the default ```postgres``` user's password
+
+          ```sh
+          sudo -i -u postgres
+          psql -U postgres
+          \password
+          \q
+          exit
+          ```
+
+      3. Update the postgres config to allow remote connections and replace peer authentication.
+
+        Update ```/etc/postgresql/14/main/postgresql.conf``` to allow for connections from all ips
+
+        Update ```/etc/postgresql/14/main/pg_hba.conf``` to allow md5 authentication from localhost.
+
+      4. Restart the database and create the development tables.
+
+          ```sh
+          sudo systemctl restart postgresql
+          psql -U postgres
+          CREATE DATABASE lyle;
+          \q
+          ```
+
+ 3. **Cloning the project**
 
       Clone the development branch of the project into the server. Make sure that you are logged in as the created user.
 
- 3. **Setting up the application**
+      ```sh
+      git clone repo-template-ec2
+      ```
+
+ 4. **Setting up the application**
 
       This involves the following steps:
 
       1. Navigate into the cloned application folder
+
+        ```sh
+        cd repo-template-ec2/services/web
+        ```
       2. Create a python3 virtual environment
+
+        ```sh
+        python3 -m venv venv
+        source venv
+        ```
+
       3. Update the package manager
+
+        ```sh
+        cd repo-template
+        make update
+        ```
+
       4. Install the runtime dependancies
+
+        ```sh
+        make install
+        ```
+
       5. Create the project secrets
 
- 4. **Creating a service**
+        ```sh
+        touch /home/lyle/.env
+        nano /home/lyle/.env
+        ```
+
+        Then add the .env file to the bash profile and source the bash profile.
+
+        ```sh
+        nano /home/lyle/.profile
+        ```
+
+        Then profile the following:
+
+        ```sh
+        set -o allexport;source /home/lyle/.env; set +o allexport
+        ```
+
+        Then source the bash profile:
+
+        ```sh
+        source /home/lyle/.profile
+        ```
+
+      6. Create the database tables
+
+        ```sh
+        cd web/services
+        source venv/bin/activate
+        python manage.py create_db
+        python manage.py seed_db
+        ```
+
+      7. Create the database migrations
+
+ 5. **Creating a service**
 
       Create a new service that automatically start the application when the server is booted. Enable the service and start it.
 
       Here is the service template:
 
       ```sh
-        [Unit]
-        Description=Gunicorn instance to serve the api
-        After=network.target
+      [Unit]
+      Description=Gunicorn instance to serve the api
+      After=network.target
 
-        [Service]
-        User=lyle
-        Group=lyle
-        WorkingDirectory=/home/lyle/repo-template/services/web
-        Environment="PATH=/home/lyle/repo-template/services/web/venv/bin"
-        EnvironmentFile=/home/lyle/.env
-        ExecStart=/home/lyle/repo-template/services/web/venv/bin/gunicorn --workers 4 --bind 0.0.0.0:5000 manage:app
+      [Service]
+      User=lyle
+      Group=lyle
+      WorkingDirectory=/home/lyle/repo-template-ec2/services/web
+      Environment="PATH=/home/lyle/repo-template-ec2/services/web/venv/bin"
+      EnvironmentFile=/home/lyle/.env
+      ExecStart=/home/lyle/repo-template-ec2/services/web/venv/bin/gunicorn --workers 4 --bind 0.0.0.0:5000 manage:app
 
-        [Install]
-        WantedBy=multi-user.target
+      [Install]
+      WantedBy=multi-user.target
       ```
 
- 5. **Setting up the application domain**
+      Create the service using the above template:
+
+      ```sh
+      sudo nano /etc/systemd/system/gunicorn.service
+      sudo systemctl enable gunicorn
+      sudo systemctl start gunicorn
+      ```
+
+ 6. **Setting up the application domain**
 
       Purchase a domain name then use Route53 to create a hosted zone.
 
- 6. **Setting up the application server with the domain**
+ 7. **Setting up the application server with the domain**
 
       Update the nginx config to route traffic form port 80 to port 5000 for the gunicorn server. Here is a sample config:
 
@@ -458,7 +607,7 @@ The initial deployment describes the first dployment to the AWS EC2 instance. Th
                   listen 80 default_server;
                   listen [::]:80 default_server;
 
-                  server_name _; # replace with specific domain name like sanjeev.com
+                  server_name _; # replace with specific domain name like twyl.xyz
 
                   location / {
                           proxy_pass http://localhost:5000;
@@ -475,19 +624,21 @@ The initial deployment describes the first dployment to the AWS EC2 instance. Th
           }
       ```
 
-      Use certbot to generate an SSL certficate for your domain.
+      Modify the ```/etc/ginx/sites-available/default``` using the above template then restart nginx.
 
- 7. **Launching the application**
+      Use certbot to generate an SSL certficate for your domain. Follow the instructions from the [official certbot site.](https://certbot.eff.org/instructions?ws=nginx&os=ubuntufocal)
+
+ 8. **Launching the application**
 
       Restart the created service.
 
-8. **Setting up Logging**
+ 9. **Setting up Logging**
 
       This involves creating a FirehoseDeliveryStream as well as AWS OpenSearch.
 
       Once the application is up and running, you can view the logs by heading over to the OpenSearch dashboard. Here is a video showing some logs:
 
-      ![](resources/videos/header.gif)
+      ![](resources/videos/logging.gif)
 
 The incremental deployment describes the process of deploying new changes to the already deployed application. It involves the following steps:
 

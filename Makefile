@@ -40,3 +40,9 @@ seed-db:
 test-local:
 	@curl localhost:5000/
 	@curl localhost:5000/users
+
+run-dev:
+	@sudo docker-compose -f docker-compose-dev.yml up --build
+
+stop-dev:
+	@sudo docker-compose -f docker-compose-dev.yml down
