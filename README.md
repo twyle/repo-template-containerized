@@ -265,6 +265,10 @@ Here is how to set up the application locally:
       make run-dev
       ```
 
+  9. View the running application
+
+      Head over to flask.localhost/apidocs
+
 ## Development
 
  #### 1. Application Design
@@ -411,32 +415,25 @@ The initial deployment describes the first dployment to the AWS EC2 instance. Th
           sudo apt update && sudo apt upgrade -y
           ```
 
-      3. Install the python package manager (python3-pip)
+      3. Install docker and docker compose
+
+          Follow these instaructions from Digital Ocean on [How To Install and Use Docker on Ubuntu 22.04](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04)
+
+          Then install docker compose:
 
           ```sh
-          sudo apt install python3-pip -y
+          sudo apt install docker-compose -y
           ```
 
-      4. Install the virtual environment manager (python3-venv)
+      4. Create a new user, and give them admin access and enable them to use docker.
 
           ```sh
-          sudo apt install python3-venv -y
+          sudo adduser lyle
+          sudo usermod -aG sudo ${USER}
+          sudo usermod -aG docker ${USER}
           ```
 
-      5. Install nginx, enable it and start it.
-
-          ```sh
-          sudo apt install nginx -y
-          ```
-
-      6. Create a new user, and give them admin access.
-
-          ```sh
-          adduser lyle
-          sudo usermod -aG sudo lyle
-          ```
-
-      7. Enable ssh into the created user account
+      5. Enable ssh into the created user account
 
           ```sh
            sudo su - lyle
@@ -454,51 +451,18 @@ The initial deployment describes the first dployment to the AWS EC2 instance. Th
 
           copy and paste into the .ssh/authorized_keys file
 
-      8. Create an elastic IP for the EC2 instance.
+      6. Create an elastic IP for the EC2 instance.
 
- 2. **Setting up the PostgreSQL database**
-      To set up the database, follow these steps:
-
-      1. Install PostgreSQL
-
-          ```sh
-          sudo apt install postgresql postgresql-contrib -y
-          ```
-
-      2. Update the default ```postgres``` user's password
-
-          ```sh
-          sudo -i -u postgres
-          psql -U postgres
-          \password
-          \q
-          exit
-          ```
-
-      3. Update the postgres config to allow remote connections and replace peer authentication.
-
-        Update ```/etc/postgresql/14/main/postgresql.conf``` to allow for connections from all ips
-
-        Update ```/etc/postgresql/14/main/pg_hba.conf``` to allow md5 authentication from localhost.
-
-      4. Restart the database and create the development tables.
-
-          ```sh
-          sudo systemctl restart postgresql
-          psql -U postgres
-          CREATE DATABASE lyle;
-          \q
-          ```
-
- 3. **Cloning the project**
+ 2. **Cloning the project**
 
       Clone the development branch of the project into the server. Make sure that you are logged in as the created user.
 
       ```sh
-      git clone repo-template-ec2
+      ssh -i "ec2.pem" lyle@ec2-xx-206-xx-100.compute-1.amazonaws.com
+      git clone repo-template-containerized
       ```
 
- 4. **Setting up the application**
+ 3. **Setting up the application**
 
       This involves the following steps:
 
@@ -507,132 +471,57 @@ The initial deployment describes the first dployment to the AWS EC2 instance. Th
         ```sh
         cd repo-template-ec2/services/web
         ```
-      2. Create a python3 virtual environment
+
+      2. Create the project secrets
 
         ```sh
+        touch services/database/.env
+        nano services/database/.env
+        ```
+
+        Then add the database secrets.
+
+        Then create the apps secrets:
+
+        ```sh
+        touch services/web/.env
+        nano services/web/.env
+        ```
+
+      3. Start the database containers.
+
+        ```sh
+        sudo docker-compose -f services/database/database-compose.yml up --build -d
+        ```
+
+      4. Create the database tables
+
+        ```sh
+        cd services/web
+        sudo apt install python3-pip python3-venv -y
         python3 -m venv venv
-        source venv
-        ```
-
-      3. Update the package manager
-
-        ```sh
-        cd repo-template
-        make update
-        ```
-
-      4. Install the runtime dependancies
-
-        ```sh
-        make install
-        ```
-
-      5. Create the project secrets
-
-        ```sh
-        touch /home/lyle/.env
-        nano /home/lyle/.env
-        ```
-
-        Then add the .env file to the bash profile and source the bash profile.
-
-        ```sh
-        nano /home/lyle/.profile
-        ```
-
-        Then profile the following:
-
-        ```sh
-        set -o allexport;source /home/lyle/.env; set +o allexport
-        ```
-
-        Then source the bash profile:
-
-        ```sh
-        source /home/lyle/.profile
-        ```
-
-      6. Create the database tables
-
-        ```sh
-        cd web/services
         source venv/bin/activate
+        pip install -r requirements.txt
         python manage.py create_db
         python manage.py seed_db
-        ```
 
-      7. Create the database migrations
-
- 5. **Creating a service**
-
-      Create a new service that automatically start the application when the server is booted. Enable the service and start it.
-
-      Here is the service template:
-
-      ```sh
-      [Unit]
-      Description=Gunicorn instance to serve the api
-      After=network.target
-
-      [Service]
-      User=lyle
-      Group=lyle
-      WorkingDirectory=/home/lyle/repo-template-ec2/services/web
-      Environment="PATH=/home/lyle/repo-template-ec2/services/web/venv/bin"
-      EnvironmentFile=/home/lyle/.env
-      ExecStart=/home/lyle/repo-template-ec2/services/web/venv/bin/gunicorn --workers 4 --bind 0.0.0.0:5000 manage:app
-
-      [Install]
-      WantedBy=multi-user.target
-      ```
-
-      Create the service using the above template:
-
-      ```sh
-      sudo nano /etc/systemd/system/gunicorn.service
-      sudo systemctl enable gunicorn
-      sudo systemctl start gunicorn
-      ```
-
- 6. **Setting up the application domain**
+ 4. **Setting up the application domain**
 
       Purchase a domain name then use Route53 to create a hosted zone.
 
- 7. **Setting up the application server with the domain**
+ 5. **Setting up the application server with the domain**
 
-      Update the nginx config to route traffic form port 80 to port 5000 for the gunicorn server. Here is a sample config:
+      This is done for you by traefik.
+
+ 6. **Launching the application**
+
+      Restart the application container:
 
       ```sh
-          server {
-                  listen 80 default_server;
-                  listen [::]:80 default_server;
-
-                  server_name _; # replace with specific domain name like twyl.xyz
-
-                  location / {
-                          proxy_pass http://localhost:5000;
-                          proxy_http_version 1.1;
-                          proxy_set_header X-Real-IP $remote_addr;
-                          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                          proxy_set_header Upgrade $http_upgrade;
-                          proxy_set_header Connection 'upgrade';
-                          proxy_set_header Host $http_host;
-                          proxy_set_header X-NginX-Proxy true;
-                          proxy_redirect off;
-                  }
-
-          }
+      sudo docker-compose -f docker-compose-prod.yml up -d
       ```
 
-      Modify the ```/etc/ginx/sites-available/default``` using the above template then restart nginx.
-
-      Use certbot to generate an SSL certficate for your domain. Follow the instructions from the [official certbot site.](https://certbot.eff.org/instructions?ws=nginx&os=ubuntufocal)
-
- 8. **Launching the application**
-
-      Restart the created service.
-
- 9. **Setting up Logging**
+ 7. **Setting up Logging**
 
       This involves creating a FirehoseDeliveryStream as well as AWS OpenSearch.
 
