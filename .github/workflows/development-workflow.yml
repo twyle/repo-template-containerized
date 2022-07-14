@@ -221,4 +221,4 @@ jobs:
     - name: Test application
       run: |
         sleep 5
-        curl https://flask-traefik.${{ secrets.APP_DOMAIN }}/ | grep "api"
+        curl https://flask-traefik.twyle.xyz/ | grep "api"
