@@ -1,4 +1,4 @@
-# A Template For Creating Repositories a
+# A Template For Creating Repositories 
 
 > This flask application enables enables an admin to register then authorizes them to create new users.
 
