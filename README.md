@@ -539,7 +539,7 @@ The incremental deployment describes the process of deploying new changes to the
 This is handled using GitHub Actions:
 
 ```sh
-DeployDev:
+  DeployDev:
     name: Deploy to Dev
     # if: github.event_name == 'pull_request'
     needs: [Test-Local]
@@ -555,18 +555,17 @@ DeployDev:
       - name: Deploy in EC2
         env:
           PRIVATE_KEY: ${{ secrets.AWS_PRIVATE_KEY  }}
-          HOST_NAME : ${{ secrets.HOST_IP  }}
+          HOST_NAME : ${{ secrets.HOST_NAME  }}
           USER_NAME : ${{ secrets.USER_NAME  }}
           USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
           APP_DIR: ${{secrets.APP_DIR}}
-          SERVICE_NAME: ${{secrets.SERVICE_NAME}}
 
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} "
             cd ${APP_DIR} &&
             git pull &&
-            echo ${USER_PASSWORD} | sudo -S systemctl restart ${SERVICE_NAME} "
+            echo ${USER_PASSWORD} | sudo -S docker-compose -f docker-compose-prod.yml up --build -d "
 ```
 
 ## Releases
