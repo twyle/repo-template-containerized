@@ -51,14 +51,14 @@ Here's a video showing how to use the application:
 ## Features
 
 This application has several features including:
- 1. Deployed to an AWS Instance using a custom domain language.
+ 1. Deployed to an AWS Instance using docker and a custom domain name.
  2. Versioned using Git and Hosted on GitHub.
  3. Auto-deployed to AWS using GitHub Actions.
- 4. Uses gunicorn as the application server and nginx as the proxy.
+ 4. Uses gunicorn as the application server and traefik as the proxy.
  5. Uses AWS SES to send emails.
  6. Uses AWS Opensearch and Firehose for logging as well as filebeats.
  7. Uses AWS Secrets manager to manage the application secrets and AWS KMS for key management.
- 8. Uses PostgreSQL for data storage.
+ 8. Uses a containerized PostgreSQL instnace for data storage.
  9. Uses JSON Web Tokens to authorize users.
  10. Uses AWS Route53 to route traffic to the application.
  11. Built using flask, flask-mail, flask-jwt
@@ -100,6 +100,16 @@ repo-template-containerized/
 |     |     |
 |     |     └───database-compose.yml
 |     |
+│     └───traefik/
+│     |     |
+|     |     └───Dockerfile.traefik.dev
+|     |     |
+|     |     └───Dockerfile.traefik.prod
+|     |     |
+|     |     └───traefik.dev.toml
+|     |     |
+|     |     └───traefik.prod.toml
+|     |
 |     └───web/
 |           |
 |           └───api/
@@ -126,7 +136,9 @@ repo-template-containerized/
 |
 └───.pylintrc
 |
-└───docker-compose.yml
+└───docker-compose-dev.yml
+|
+└───docker-compose-prod.yml
 |
 └───LICENSE
 |
@@ -539,7 +551,7 @@ The incremental deployment describes the process of deploying new changes to the
 This is handled using GitHub Actions:
 
 ```sh
-DeployDev:
+  DeployDev:
     name: Deploy to Dev
     # if: github.event_name == 'pull_request'
     needs: [Test-Local]
@@ -555,87 +567,37 @@ DeployDev:
       - name: Deploy in EC2
         env:
           PRIVATE_KEY: ${{ secrets.AWS_PRIVATE_KEY  }}
-          HOST_NAME : ${{ secrets.HOST_IP  }}
+          HOST_NAME : ${{ secrets.HOST_NAME  }}
           USER_NAME : ${{ secrets.USER_NAME  }}
           USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
           APP_DIR: ${{secrets.APP_DIR}}
-          SERVICE_NAME: ${{secrets.SERVICE_NAME}}
 
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOST_NAME} "
             cd ${APP_DIR} &&
             git pull &&
-            echo ${USER_PASSWORD} | sudo -S systemctl restart ${SERVICE_NAME} "
+            echo ${USER_PASSWORD} | sudo -S docker-compose -f docker-compose-prod.yml up --build -d "
 ```
 
 ## Releases
 
-## v0.3.0 (2022-07-12)
+## v0.1.0 (2022-07-14)
 
 ### Fix
 
-- checking for large file uploads.
-- provides the jwt secrets.
-- loads the env vars in config.
-- loads the env vars before app creation.
-- updated the config options.
+- fixes the release badge url.
+- updates the dockerfile path.
+- only restarts the container.
+- uses the right docker compose file.
 
 ### Feat
 
-- shows using the app.
+- auto-deploy to AWS.
+- adds the traefik config.
+- creates the initial project layout.
 
-## v0.2.0 (2022-07-12)
-
-### Fix
-
-- restores the old animation.
-- updates the workflow badges.
-
-### Feat
-
-- adds the app animation.
-- adds the workflow badges.
-
-## v0.1.0 (2022-07-12)
-
-### Feat
-
-- adds the project layout.
-
-## v0.0.1 (2022-07-12)
-
-### Feat
-
-- adds the makefile.
-- creates the deployment instructions.
-- creates the deployment instructions.
-- creates the deployment instructions.
-- creates the deployment instructions.
-- creates the deployment instructions.
-- creates the deployment instructions.
-- creates the deployment instructions.
-- adds the application routes.
-- adds the development workflow.
-- shows how to install the application.
-- shows how to install the application.
-- shows how to develop the project locally.
-- adds the application structure.
-- creates the initial layout.
-- adds the video showing app usage.
-- shows how to use the application.
-- updates the project description.
-- resizes the images.
-- adds the header image.
-- adds the header image.
-- Creates the section headers.
-
-### Fix
-
-- uses gif.
-- using mp4
-- fixes the video tag.
-
+## v0.0.1 (2022-07-14)
 
 ## Contribution
 
