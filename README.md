@@ -51,14 +51,14 @@ Here's a video showing how to use the application:
 ## Features
 
 This application has several features including:
- 1. Deployed to an AWS Instance using a custom domain language.
+ 1. Deployed to an AWS Instance using docker and a custom domain name.
  2. Versioned using Git and Hosted on GitHub.
  3. Auto-deployed to AWS using GitHub Actions.
- 4. Uses gunicorn as the application server and nginx as the proxy.
+ 4. Uses gunicorn as the application server and traefik as the proxy.
  5. Uses AWS SES to send emails.
  6. Uses AWS Opensearch and Firehose for logging as well as filebeats.
  7. Uses AWS Secrets manager to manage the application secrets and AWS KMS for key management.
- 8. Uses PostgreSQL for data storage.
+ 8. Uses a containerized PostgreSQL instnace for data storage.
  9. Uses JSON Web Tokens to authorize users.
  10. Uses AWS Route53 to route traffic to the application.
  11. Built using flask, flask-mail, flask-jwt
@@ -100,6 +100,16 @@ repo-template-containerized/
 |     |     |
 |     |     └───database-compose.yml
 |     |
+│     └───traefik/
+│     |     |
+|     |     └───Dockerfile.traefik.dev
+|     |     |
+|     |     └───Dockerfile.traefik.prod
+|     |     |
+|     |     └───traefik.dev.toml
+|     |     |
+|     |     └───traefik.prod.toml
+|     |
 |     └───web/
 |           |
 |           └───api/
@@ -126,7 +136,9 @@ repo-template-containerized/
 |
 └───.pylintrc
 |
-└───docker-compose.yml
+└───docker-compose-dev.yml
+|
+└───docker-compose-prod.yml
 |
 └───LICENSE
 |
